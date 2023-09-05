@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
 project(index)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP jsoncpp)
@@ -17,6 +17,7 @@ add_executable(index
         include/bucket.h
         include/property.h
         utils/record.h
+        utils/hash_function.h
 )
 
-target_link_libraries(${PROJECT_NAME} ${JSONCPP_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONCPP_LIBRARIES} ssl crypto)

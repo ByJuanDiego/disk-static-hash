@@ -7,7 +7,12 @@
 
 
 // Third party libraries
+#include <boost/convert.hpp>
+#include <boost/convert/stream.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
+
+#include <openssl/sha.h>
+
 #include <json/json.h>
 
 
@@ -22,9 +27,17 @@
 #include "buffer_size.h"
 
 
+namespace json_keys {
+    std::string BUCKET_CAPACITY = "bucket_capacity";
+    std::string HASH_TABLE_SIZE = "hash_table_size";
+    std::string INDEX_FILE_NAME = "index_file_name";
+    std::string METADATA_FILE_NAME = "metadata_file_name";
+}
+
 namespace types {
     using uint256 = boost::multiprecision::uint256_t;
     using uint32 = uint32_t;
+    using int64 = int64_t;
 }
 
 namespace constants {

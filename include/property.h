@@ -7,6 +7,8 @@
 
 #include "dependencies.h"
 
+using namespace json_keys;
+
 struct Property {
     std::string index_file_name;
     std::string metadata_file_name;
@@ -26,10 +28,10 @@ struct Property {
     [[nodiscard]] Json::Value json_value() const {
         Json::Value json_format;
 
-        json_format["index_file_name"] = index_file_name;
-        json_format["metadata_file_name"] = metadata_file_name;
-        json_format["hash_table_size"] = hash_tabla_size;
-        json_format["bucket_capacity"] = bucket_capacity;
+        json_format[INDEX_FILE_NAME] = index_file_name;
+        json_format[HASH_TABLE_SIZE] = hash_tabla_size;
+        json_format[BUCKET_CAPACITY] = bucket_capacity;
+        json_format[METADATA_FILE_NAME] = metadata_file_name;
 
         return json_format;
     }

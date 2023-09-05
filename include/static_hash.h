@@ -12,9 +12,9 @@
 template <
     typename KeyType,
     typename RecordType,
+    typename Equal = std::equal_to<KeyType>,
     typename Hash = std::hash<KeyType>,
-    typename Index = std::function<KeyType(RecordType)>,
-    typename Equal = std::equal_to<KeyType>
+    typename Index = std::function<KeyType(RecordType)>
 >
 struct StaticHash {
 private:
@@ -26,6 +26,7 @@ private:
 
     Hash hash_function;
     Index index_function;
+    Equal equal_function;
 
     void load_metadata() {
         metadata_file >> metadata_json;
@@ -37,9 +38,9 @@ private:
         metadata_file << metadata_json;
         metadata_file.close();
         
-        static_hash_file.open(metadata_json["index_file_name"].asString(), std::ios::out);
-        for (int i = 0; i < metadata_json["hash_table_size"].asInt(); ++i) {
-            Bucket<RecordType> bucket(metadata_json["bucket_capacity"].asInt());
+        static_hash_file.open(metadata_json[INDEX_FILE_NAME].asString(), std::ios::out);
+        for (int i = 0; i < metadata_json[HASH_TABLE_SIZE].asInt(); ++i) {
+            Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY].asInt());
             bucket.write(static_hash_file);
         }
         static_hash_file.close();
@@ -47,7 +48,10 @@ private:
 
 public:
 
-    explicit StaticHash(const Property& property) {
+    explicit StaticHash(const Property& property, Index index, Hash hash = Hash(), Equal equal = Equal())
+    :   index_function(index),
+        hash_function(hash),
+        equal_function(equal) {
         metadata_file.open(property.metadata_file_name, std::ios::in);
         if (metadata_file.good()) {
             load_metadata();
@@ -59,7 +63,14 @@ public:
     }
 
     RecordType search(KeyType key) {
+        int i = hash_function(key) % metadata_json[HASH_TABLE_SIZE].asInt();
+        Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY]);
 
+        long long bucket_position = i * bucket.size_of();
+
+        static_hash_file.open(metadata_json[INDEX_FILE_NAME].asString(), std::ios::in | std::ios::binary);
+        static_hash_file.seekg(bucket_position);
+        bucket.read(static_hash_file);
     }
 
     void insert(const RecordType& record) {
