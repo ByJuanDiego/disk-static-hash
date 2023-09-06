@@ -9,12 +9,12 @@
 
 struct Record {
     int id;
-    char name [10];
+    char name [11];
     int age;
 
     explicit Record() = default;
 
-    explicit Record(int id, const char* name, int age): id(id), age(age) {
+    explicit Record(int id, const char* name, int age): id(id), age(age), name() {
         strcpy(this->name, name);
     }
 

@@ -7,6 +7,8 @@
 
 #include "bucket.h"
 #include "property.h"
+#include "file_utils.h"
+
 
 using namespace error_logs;
 
@@ -33,13 +35,19 @@ private:
         metadata_file >> metadata_json;
     }
 
-    void initialize_new_index(const Property& property) {
-        metadata_json = property.json_value();
-        metadata_file.open(metadata_json[METADATA_FILE_NAME].asString(), std::ios::out);
+    void initialize_new_index() {
+        if (!directory_exists(metadata_json[DIRECTORY_PATH].asString())) {
+            bool successfully_created = create_directory(metadata_json[DIRECTORY_PATH].asString());
+            if (!successfully_created) {
+                throw std::runtime_error(CREATE_DIR_ERROR);
+            }
+        }
+
+        metadata_file.open(metadata_json[METADATA_FULL_PATH].asString(), std::ios::out);
         metadata_file << metadata_json;
         metadata_file.close();
-        
-        static_hash_file.open(metadata_json[INDEX_FILE_NAME].asString(), std::ios::out);
+
+        static_hash_file.open(metadata_json[INDEX_FULL_PATH].asString(), std::ios::out);
         for (int i = 0; i < metadata_json[HASH_TABLE_SIZE].asInt(); ++i) {
             Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY].asInt());
             bucket.write(static_hash_file);
@@ -53,14 +61,14 @@ public:
     :   get_indexed_field(index),
         hash_function(hash),
         equal_function(equal) {
-        metadata_file.open(property.metadata_file_name, std::ios::in);
+        metadata_json = property.json_value();
+        metadata_file.open(metadata_json[METADATA_FULL_PATH].asString(), std::ios::in);
 
         if (metadata_file.good()) {
             load_metadata();
         } else {
-            std::cout << "XD" << std::endl;
             metadata_file.close();
-            initialize_new_index(property);
+            initialize_new_index();
         }
         metadata_file.close();
     }
@@ -70,7 +78,7 @@ public:
         Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY].asInt());
 
         long long seek_bucket = i * bucket.size_of();
-        static_hash_file.open(metadata_json[INDEX_FILE_NAME].asString(), std::ios::in | std::ios::binary);
+        static_hash_file.open(metadata_json[INDEX_FULL_PATH].asString(), std::ios::in | std::ios::binary);
 
         std::vector<RecordType> located_records;
         bool any_found;
@@ -80,14 +88,12 @@ public:
             bucket.read(static_hash_file);
 
             for (int j = 0; j < bucket.num_records; ++j) {
-                std::cout << bucket.records[i] << std::endl;
-
-                if (!equal_function(key, get_indexed_field(bucket.records[i]))) {
+                if (!equal_function(key, get_indexed_field(bucket.records[j]))) {
                     continue;
                 }
 
                 any_found = true;
-                located_records.push_back(bucket.records[i]);
+                located_records.push_back(bucket.records[j]);
 
                 if (!metadata_json[PRIMARY_KEY].asBool()) {
                     continue;
@@ -112,7 +118,7 @@ public:
         Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY].asInt());
 
         long long seek_bucket = i * bucket.size_of();
-        static_hash_file.open(metadata_json[INDEX_FILE_NAME].asString(), std::ios::in | std::ios::out | std::ios::binary);
+        static_hash_file.open(metadata_json[INDEX_FULL_PATH].asString(), std::ios::in | std::ios::out | std::ios::binary);
 
         long long bucket_to_insert = -1;
         long long prev_bucket;
@@ -136,6 +142,7 @@ public:
                     if (!equal_function(get_indexed_field(record), get_indexed_field(bucket.records[j]))) {
                         continue;
                     }
+                    static_hash_file.close();
                     throw std::runtime_error(REPEATED_KEY);
                 }
             }

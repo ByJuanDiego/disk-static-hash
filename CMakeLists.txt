@@ -18,6 +18,7 @@ add_executable(${PROJECT_NAME}
         include/property.h
         utils/record.h
         utils/hash_function.h
+        utils/file_utils.h
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONCPP_LIBRARIES} ssl crypto)

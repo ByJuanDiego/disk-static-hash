@@ -30,14 +30,16 @@
 namespace json_keys {
     std::string BUCKET_CAPACITY = "bucket_capacity";
     std::string HASH_TABLE_SIZE = "hash_table_size";
-    std::string INDEX_FILE_NAME = "index_file_name";
-    std::string METADATA_FILE_NAME = "metadata_file_name";
+    std::string DIRECTORY_PATH = "directory_path";
+    std::string INDEX_FULL_PATH = "index_full_path";
+    std::string METADATA_FULL_PATH = "metadata_full_path";
     std::string PRIMARY_KEY = "primary_key";
 }
 
 namespace error_logs {
     std::string KEY_NOT_FOUND = "Key not found";
     std::string REPEATED_KEY = "Repeated key";
+    std::string CREATE_DIR_ERROR = "Error creating directory";
 }
 
 namespace types {
