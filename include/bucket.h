@@ -31,6 +31,10 @@ template <
         this->records = new RecordType[this->bucket_capacity];
     }
 
+    ~Bucket() {
+        delete [] records;
+    }
+
     int size_of() {
         return 2 * sizeof(uint32) + sizeof(int64) + sizeof(RecordType) * bucket_capacity;
     }
