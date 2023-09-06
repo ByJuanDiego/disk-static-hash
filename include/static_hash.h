@@ -5,12 +5,21 @@
 #ifndef STATIC_HASH_STATIC_HASH_H
 #define STATIC_HASH_STATIC_HASH_H
 
+#include <functional>
+#include <algorithm>
+#include <utility>
+#include <fstream>
+#include <sstream>
+
 #include "bucket.h"
 #include "property.h"
 #include "file_utils.h"
 
+#include <iostream>
 
-using namespace error_logs;
+const std::string KEY_NOT_FOUND = "Key not found";
+const std::string REPEATED_KEY = "Repeated key";
+const std::string CREATE_DIR_ERROR = "Error creating directory";
 
 template <
     typename KeyType,
@@ -81,7 +90,7 @@ public:
         static_hash_file.open(metadata_json[INDEX_FULL_PATH].asString(), std::ios::in | std::ios::binary);
 
         std::vector<RecordType> located_records;
-        bool any_found;
+        bool any_found = false;
 
         do {
             static_hash_file.seekg(seek_bucket);

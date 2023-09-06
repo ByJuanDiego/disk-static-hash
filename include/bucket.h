@@ -5,24 +5,34 @@
 #ifndef STATIC_HASH_BUCKET_H
 #define STATIC_HASH_BUCKET_H
 
-#include "dependencies.h"
+#include <sstream>
+#include <fstream>
+#include <cmath>
+#include <cstdint>
+
+#include "buffer_size.h"
+
+const unsigned long BUFFER_SIZE = get_buffer_size();
+
+using uint32 = uint32_t;
+using int64 = int64_t;
+
 
 template <
         typename RecordType
 > struct Bucket {
-    types::uint32 bucket_capacity;
-    types::uint32 num_records;
+    uint32 bucket_capacity;
+    uint32 num_records;
 
     RecordType* records;
-    types::int64 next_bucket;
+    int64 next_bucket;
 
-    explicit Bucket(int blocking_factor) : num_records(0), next_bucket(-1) {
-        bucket_capacity = blocking_factor;
+    explicit Bucket(int bucket_capacity): num_records(0), next_bucket(-1), bucket_capacity(bucket_capacity) {
         this->records = new RecordType[this->bucket_capacity];
     }
 
     int size_of() {
-        return 2 * constants::size_of<types::uint32> + constants::size_of<RecordType> * bucket_capacity;
+        return 2 * sizeof(uint32) + sizeof(int64) + sizeof(RecordType) * bucket_capacity;
     }
 
     void read(std::fstream &file) {
@@ -33,25 +43,25 @@ template <
         ss.write(buffer, this->size_of());
         delete [] buffer;
 
-        ss.read((char *) &bucket_capacity, constants::size_of<types::uint32>);
-        ss.read((char *) &num_records, constants::size_of<types::uint32>);
+        ss.read((char *) &bucket_capacity, sizeof(uint32));
+        ss.read((char *) &num_records, sizeof(uint32));
 
         for (int i = 0; i < bucket_capacity; ++i)
-            ss.read((char *) &records[i], constants::size_of<RecordType>);
+            ss.read((char *) &records[i], sizeof(RecordType));
 
-        ss.read((char *) &next_bucket, constants::size_of<types::int64>);
+        ss.read((char *) &next_bucket, sizeof(int64));
     }
 
     void write(std::fstream &file) {
         std::stringstream buffer;
 
-        buffer.write((char *) &bucket_capacity, constants::size_of<types::uint32>);
-        buffer.write((char *) &num_records, constants::size_of<types::uint32>);
+        buffer.write((char *) &bucket_capacity, sizeof(uint32));
+        buffer.write((char *) &num_records, sizeof(uint32));
 
         for (int i = 0; i < bucket_capacity; ++i)
-            buffer.write((char *) &records[i], constants::size_of<RecordType>);
+            buffer.write((char *) &records[i], sizeof(RecordType));
 
-        buffer.write((char *) &next_bucket, constants::size_of<types::int64>);
+        buffer.write((char *) &next_bucket, sizeof(int64));
 
         file.write(buffer.str().c_str(), this->size_of());
     }
@@ -63,8 +73,8 @@ template <
 
 template <typename RecordType>
 int get_expected_bucket_capacity = std::floor(
-    double(constants::buffer_size - (2 *  constants::size_of<types::uint32> + constants::size_of<types::int64>))
-            / constants::size_of<RecordType>
-);
+    double((BUFFER_SIZE - (2 * sizeof(uint32) + sizeof(int64)))
+            / sizeof(RecordType))
+            );
 
 #endif //STATIC_HASH_BUCKET_H

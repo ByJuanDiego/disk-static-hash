@@ -5,9 +5,14 @@
 #ifndef STATIC_HASH_PROPERTY_H
 #define STATIC_HASH_PROPERTY_H
 
-#include "dependencies.h"
+#include <json/json.h>
 
-using namespace json_keys;
+const std::string BUCKET_CAPACITY = "bucket_capacity";
+const std::string HASH_TABLE_SIZE = "hash_table_size";
+const std::string DIRECTORY_PATH = "directory_path";
+const std::string INDEX_FULL_PATH = "index_full_path";
+const std::string METADATA_FULL_PATH = "metadata_full_path";
+const std::string PRIMARY_KEY = "primary_key";
 
 struct Property {
     std::string directory_path;
