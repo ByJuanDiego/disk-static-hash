@@ -42,7 +42,6 @@ template <
         ss.read((char *) &next_bucket, constants::size_of<types::int64>);
     }
 
-
     void write(std::fstream &file) {
         std::stringstream buffer;
 
@@ -55,6 +54,10 @@ template <
         buffer.write((char *) &next_bucket, constants::size_of<types::int64>);
 
         file.write(buffer.str().c_str(), this->size_of());
+    }
+
+    void push_back(const RecordType& record) {
+        records[num_records++] = record;
     }
 };
 

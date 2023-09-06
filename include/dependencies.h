@@ -32,6 +32,12 @@ namespace json_keys {
     std::string HASH_TABLE_SIZE = "hash_table_size";
     std::string INDEX_FILE_NAME = "index_file_name";
     std::string METADATA_FILE_NAME = "metadata_file_name";
+    std::string PRIMARY_KEY = "primary_key";
+}
+
+namespace error_logs {
+    std::string KEY_NOT_FOUND = "Key not found";
+    std::string REPEATED_KEY = "Repeated key";
 }
 
 namespace types {

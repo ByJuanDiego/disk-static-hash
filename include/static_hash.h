@@ -8,6 +8,7 @@
 #include "bucket.h"
 #include "property.h"
 
+using namespace error_logs;
 
 template <
     typename KeyType,
@@ -25,16 +26,16 @@ private:
     Json::Value metadata_json;
 
     Hash hash_function;
-    Index index_function;
     Equal equal_function;
+    Index get_indexed_field;
 
     void load_metadata() {
         metadata_file >> metadata_json;
     }
 
-    void create_empty_static_hash(const Property& property) {
-        metadata_file.open(property.metadata_file_name, std::ios::out);
+    void initialize_new_index(const Property& property) {
         metadata_json = property.json_value();
+        metadata_file.open(metadata_json[METADATA_FILE_NAME].asString(), std::ios::out);
         metadata_file << metadata_json;
         metadata_file.close();
         
@@ -49,32 +50,122 @@ private:
 public:
 
     explicit StaticHash(const Property& property, Index index, Hash hash = Hash(), Equal equal = Equal())
-    :   index_function(index),
+    :   get_indexed_field(index),
         hash_function(hash),
         equal_function(equal) {
         metadata_file.open(property.metadata_file_name, std::ios::in);
+
         if (metadata_file.good()) {
             load_metadata();
         } else {
+            std::cout << "XD" << std::endl;
             metadata_file.close();
-            create_empty_static_hash(property);
+            initialize_new_index(property);
         }
         metadata_file.close();
     }
 
-    RecordType search(KeyType key) {
-        int i = hash_function(key) % metadata_json[HASH_TABLE_SIZE].asInt();
-        Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY]);
+    std::vector<RecordType> search(KeyType key) {
+        int i = static_cast<int>(hash_function(key) % metadata_json[HASH_TABLE_SIZE].asInt());
+        Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY].asInt());
 
-        long long bucket_position = i * bucket.size_of();
-
+        long long seek_bucket = i * bucket.size_of();
         static_hash_file.open(metadata_json[INDEX_FILE_NAME].asString(), std::ios::in | std::ios::binary);
-        static_hash_file.seekg(bucket_position);
-        bucket.read(static_hash_file);
+
+        std::vector<RecordType> located_records;
+        bool any_found;
+
+        do {
+            static_hash_file.seekg(seek_bucket);
+            bucket.read(static_hash_file);
+
+            for (int j = 0; j < bucket.num_records; ++j) {
+                std::cout << bucket.records[i] << std::endl;
+
+                if (!equal_function(key, get_indexed_field(bucket.records[i]))) {
+                    continue;
+                }
+
+                any_found = true;
+                located_records.push_back(bucket.records[i]);
+
+                if (!metadata_json[PRIMARY_KEY].asBool()) {
+                    continue;
+                }
+
+                static_hash_file.close();
+                return located_records;
+            }
+
+            seek_bucket = bucket.next_bucket;
+        } while (seek_bucket != -1);
+
+        static_hash_file.close();
+        if (any_found) {
+            return located_records;
+        }
+        throw std::runtime_error(KEY_NOT_FOUND);
     }
 
     void insert(const RecordType& record) {
+        int i = static_cast<int>(hash_function(get_indexed_field(record)) % metadata_json[HASH_TABLE_SIZE].asInt());
+        Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY].asInt());
 
+        long long seek_bucket = i * bucket.size_of();
+        static_hash_file.open(metadata_json[INDEX_FILE_NAME].asString(), std::ios::in | std::ios::out | std::ios::binary);
+
+        long long bucket_to_insert = -1;
+        long long prev_bucket;
+
+        do {
+            static_hash_file.seekg(seek_bucket);
+            bucket.read(static_hash_file);
+
+            if (bucket.num_records < bucket.bucket_capacity) {
+                if (bucket_to_insert == -1) {
+                    bucket_to_insert = seek_bucket;
+                }
+
+                if (!metadata_json[PRIMARY_KEY].asBool()) {
+                    break;
+                }
+            }
+
+            if (metadata_json[PRIMARY_KEY].asBool()) {
+                for (int j = 0; j < bucket.num_records; ++j) {
+                    if (!equal_function(get_indexed_field(record), get_indexed_field(bucket.records[j]))) {
+                        continue;
+                    }
+                    throw std::runtime_error(REPEATED_KEY);
+                }
+            }
+
+            prev_bucket = seek_bucket;
+            seek_bucket = bucket.next_bucket;
+
+        } while (seek_bucket != -1);
+
+        if (bucket_to_insert  != -1) {
+            static_hash_file.seekg(bucket_to_insert);
+            bucket.read(static_hash_file);
+            bucket.push_back(record);
+            static_hash_file.seekp(bucket_to_insert);
+            bucket.write(static_hash_file);
+        } else {
+            Bucket<RecordType> new_bucket(metadata_json[BUCKET_CAPACITY].asInt());
+            new_bucket.push_back(record);
+            static_hash_file.seekp(0, std::ios::end);
+            long long new_bucket_position = static_hash_file.tellg();
+            new_bucket.write(static_hash_file);
+
+            static_hash_file.seekg(prev_bucket);
+            bucket.read(static_hash_file);
+            bucket.next_bucket = new_bucket_position;
+            static_hash_file.seekp(prev_bucket);
+            bucket.write(static_hash_file);
+        }
+
+        static_hash_file.close();
     }
 
     void remove(KeyType key) {

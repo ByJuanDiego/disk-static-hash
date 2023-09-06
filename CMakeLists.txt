@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(index)
+project(static_hash)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -9,7 +9,7 @@ link_libraries(${JSONCPP_LIBRARIES})
 
 include_directories(./utils ./include)
 
-add_executable(index
+add_executable(${PROJECT_NAME}
         src/main.cpp
         utils/buffer_size.h
         include/static_hash.h
