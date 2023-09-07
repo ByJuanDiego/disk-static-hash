@@ -13,6 +13,9 @@
 #include "buffer_size.h"
 
 const unsigned long BUFFER_SIZE = get_buffer_size();
+const std::string FULL_BUCKET_ERROR = "Full bucket";
+const std::string INDEX_ERROR = "Index error";
+const int BUCKET_NULL_POINTER = -1;
 
 using uint32 = uint32_t;
 using int64 = int64_t;
@@ -27,7 +30,10 @@ template <
     RecordType* records;
     int64 next_bucket;
 
-    explicit Bucket(int bucket_capacity): num_records(0), next_bucket(-1), bucket_capacity(bucket_capacity) {
+    explicit Bucket(int bucket_capacity)
+    :   num_records(0),
+        next_bucket(BUCKET_NULL_POINTER),
+        bucket_capacity(bucket_capacity) {
         this->records = new RecordType[this->bucket_capacity];
     }
 
@@ -71,7 +77,26 @@ template <
     }
 
     void push_back(const RecordType& record) {
+        if (num_records == bucket_capacity) {
+            throw std::runtime_error(FULL_BUCKET_ERROR);
+        }
         records[num_records++] = record;
+    }
+
+    void remove_at(int i) {
+        if (i > (num_records - 1)) {
+            throw std::runtime_error(INDEX_ERROR);
+        }
+
+        while (i < (num_records - 1)) {
+            records[i] = records[i + 1];
+            ++i;
+        }
+        --num_records;
+    }
+
+    [[nodiscard]] bool is_empty() const {
+        return num_records == 0;
     }
 };
 
