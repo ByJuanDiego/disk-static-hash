@@ -11,8 +11,6 @@
 #include "property.h"
 #include "file_utils.h"
 
-#include <iostream>
-
 const std::string KEY_NOT_FOUND = "Key not found";
 const std::string REPEATED_KEY = "Repeated key";
 const std::string CREATE_DIR_ERROR = "Error creating directory";
