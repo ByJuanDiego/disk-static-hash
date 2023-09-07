@@ -7,15 +7,21 @@
 
 #include <ostream>
 
+const unsigned int NAME_SIZE = 11;
+
 struct Record {
     int id;
-    char name [11];
+    char name [NAME_SIZE];
     int age;
 
     explicit Record() = default;
 
-    explicit Record(int id, const char* name, int age): id(id), age(age), name() {
-        strcpy(this->name, name);
+    ~Record() = default;
+
+    explicit Record(int id, const char* _name, int age): id(id), age(age), name() {
+        strncpy(name, _name, NAME_SIZE - 1);
+        name[NAME_SIZE - 1] = '\0';
+        std::cout << name << std::endl;
     }
 
     friend std::ostream & operator << (std::ostream& os, const Record& student) {

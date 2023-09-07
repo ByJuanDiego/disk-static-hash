@@ -11,6 +11,8 @@
 #include "property.h"
 #include "file_utils.h"
 
+#include <iostream>
+
 const std::string KEY_NOT_FOUND = "Key not found";
 const std::string REPEATED_KEY = "Repeated key";
 const std::string CREATE_DIR_ERROR = "Error creating directory";
@@ -61,7 +63,7 @@ private:
 
 public:
 
-    explicit StaticHash(const Property& property, Index index, Hash hash = Hash(), Equal equal = Equal())
+    explicit StaticHash(const Property& property, Index index, Equal equal = Equal(), Hash hash = Hash())
     :   get_indexed_field(index),
         hash_function(hash),
         is_equal(equal) {
@@ -76,6 +78,8 @@ public:
         }
         metadata_file.close();
     }
+
+    ~StaticHash() = default;
 
     std::vector<RecordType> search(KeyType key) {
         int i = static_cast<int>(hash_function(key) % metadata_json[HASH_TABLE_SIZE].asInt());

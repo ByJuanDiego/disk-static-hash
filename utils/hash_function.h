@@ -34,6 +34,16 @@ namespace sha2 {
         return ss.str();
     }
 
+    std::string get_sha256(const char *str) {
+        unsigned char hash[SHA256_DIGEST_LENGTH];
+        SHA256((const unsigned char*) str, strlen(str), hash);
+        std::stringstream ss;
+        for (unsigned char i: hash) {
+            ss << std::hex << std::setw(2) << std::setfill('0') << (unsigned) i;
+        }
+        return ss.str();
+    }
+
     /**
      * Callback struct used to get sha256 from a key.
      *
@@ -51,6 +61,13 @@ namespace sha2 {
     template<>
     struct sha256<std::string> {
         boost::multiprecision::uint256_t operator()(const std::string &key) {
+            return sha2::to_uint256(sha2::get_sha256(key));
+        }
+    };
+
+    template <>
+    struct sha256<const char *> {
+        boost::multiprecision::uint256_t operator()(const char *key) {
             return sha2::to_uint256(sha2::get_sha256(key));
         }
     };

@@ -10,43 +10,36 @@ int main() {
             "./index/",
             "metadata.json",
             "my_index.dat",
-            100,
+            1,
             get_expected_bucket_capacity<Record>,
             true
     );
 
-    std::function<int(Record)> index = [](const Record& record) {
-        return record.id;
+    std::function<const char*(const Record&)> get_indexed_field = [](const Record& record) {
+        return record.name;
     };
 
-    StaticHash<int, Record, std::equal_to<>, sha256<int>> static_hash(property, index);
+    std::function<bool(const char*, const char*)> equal_to = [=](const char* str1, const char* str2){
+        return !strcmp(str1, str2);
+    };
 
+    StaticHash<const char*, Record, decltype(equal_to), sha256<const char*>> static_hash(property, get_indexed_field, equal_to);
     // insert records
-     for (int i = 1; i < 100'000; i++) {
-        Record record(i, (std::string("P") + std::to_string(i)).c_str(), 15);
-        static_hash.insert(record);
-     }
+//    for (int i = 1; i < 2; i++) {
+//        std::string s = std::string("P") + std::to_string(i);
+//        std::cout << s.c_str() << std::endl;
+//        Record record(i, s.c_str(), 15);
+//        static_hash.insert(record);
+//    }
 
-    // remove records
-    for (int i = 99'000; i < 100'000; ++i) {
-        std::cout << i << std::endl;
-        static_hash.remove(i);
-    }
+//    const char * p1 = "P1";
+//    Record r1 {15, "P2", 20};
+//
+//    std::cout << equal_to(p1, get_indexed_field(r1)) << std::endl;
 
-    // search records
-    for (int i = 1; i < 99'000; ++i) {
-        std::vector<Record> records = static_hash.search(i);
+    for (const Record& record: static_hash.search("P1")) {
+        std::cout << record << std::endl;
     }
-
-    int j = 0;
-    for (int i = 99'000; i < 100'000; ++i) {
-        try {
-            static_hash.search(i);
-        } catch (std::exception& e) {
-            ++j;
-        }
-    }
-    std::cout << j << std::endl;
 
     return EXIT_SUCCESS;
 }
