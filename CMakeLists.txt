@@ -61,6 +61,7 @@ target_link_options(
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fsanitize=address,undefined>)
 
 find_package(OpenSSL REQUIRED)
+pkg_check_modules(JSONCPP jsoncpp) # What does this does
 
 link_libraries(${JSONCPP_LIBRARIES})
 link_libraries(${OpenSSL_LIBRARIES})
