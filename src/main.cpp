@@ -11,31 +11,26 @@ int main() {
             "metadata.json",
             "my_index.dat",
             1,
-            get_expected_bucket_capacity<Record>,
+            get_expected_bucket_capacity<Record>(),
             true
     );
 
-    std::function<const char*(const Record&)> get_indexed_field = [](const Record& record) {
+    std::function<const char*(Record&)> get_indexed_field = [](Record& record) {
         return record.name;
     };
 
-    std::function<bool(const char*, const char*)> equal_to = [=](const char* str1, const char* str2){
+    std::function<bool(const char*, const char*)> equal_to = [](const char* str1, const char* str2){
         return !strcmp(str1, str2);
     };
 
     StaticHash<const char*, Record, decltype(equal_to), sha256<const char*>> static_hash(property, get_indexed_field, equal_to);
-    // insert records
-//    for (int i = 1; i < 2; i++) {
-//        std::string s = std::string("P") + std::to_string(i);
-//        std::cout << s.c_str() << std::endl;
-//        Record record(i, s.c_str(), 15);
-//        static_hash.insert(record);
-//    }
 
-//    const char * p1 = "P1";
-//    Record r1 {15, "P2", 20};
-//
-//    std::cout << equal_to(p1, get_indexed_field(r1)) << std::endl;
+    // insert records
+    for (int i = 1; i < 3; i++) {
+        std::string s = std::string("P") + std::to_string(i);
+        Record record(i, s.c_str(), 15);
+        static_hash.insert(record);
+    }
 
     for (const Record& record: static_hash.search("P1")) {
         std::cout << record << std::endl;

@@ -101,9 +101,10 @@ template <
 };
 
 template <typename RecordType>
-int get_expected_bucket_capacity = std::floor(
-    double((BUFFER_SIZE - (2 * sizeof(uint32) + sizeof(int64)))
-            / sizeof(RecordType))
-            );
-
+int get_expected_bucket_capacity(){
+    return std::floor(
+            double((BUFFER_SIZE - (2 * sizeof(uint32) + sizeof(int64)))
+                   / sizeof(RecordType))
+    );
+}
 #endif //STATIC_HASH_BUCKET_H

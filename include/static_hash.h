@@ -23,7 +23,7 @@ template <
     typename RecordType,
     typename Equal = std::equal_to<KeyType>,
     typename Hash = std::hash<KeyType>,
-    typename Index = std::function<KeyType(RecordType)>
+    typename Index = std::function<KeyType(RecordType&)>
 >
 struct StaticHash {
 private:
@@ -127,7 +127,7 @@ public:
         throw std::runtime_error(KEY_NOT_FOUND);
     }
 
-    void insert(const RecordType& record) {
+    void insert(RecordType& record) {
         int i = static_cast<int>(hash_function(get_indexed_field(record)) % metadata_json[HASH_TABLE_SIZE].asInt());
         Bucket<RecordType> bucket(metadata_json[BUCKET_CAPACITY].asInt());
 
